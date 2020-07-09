@@ -10,7 +10,13 @@ server = express(),
     port = process.env.PORT || 3005,
     host = process.env.HOST || 'localhost'
 bodyParser = require('body-parser'),
-    queryParser = require('express-query-int');
+    queryParser = require('express-query-int'),
+    cron = require("node-cron"),
+    cronscript = require('../controllers/CRON');
+
+cron.schedule('*/20 * * * * *', () => {
+    cronscript.RunScripts();
+});
 
 const io = require('socket.io')(8083, {
     path: '/test',
