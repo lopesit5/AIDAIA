@@ -10,9 +10,7 @@ const { spawn } = require('child_process');
 
 const pythonDir = (__dirname + "/../Python_Scripts/"); // Path of python script folder
 
-
-async function RunScripts() {
-
+async function ScriptsPyR() {
 
     oracledb.autoCommit = true;
 
@@ -38,68 +36,124 @@ async function RunScripts() {
 
         for (const script of result.rows) {
 
-            var listScripts = [];
-            listScripts.push(__dirname + "/../Python_Scripts/" + script.PATH);
+            if(script.ML_LANG == 'Python') {   
 
-            var dataToSend;
-            // spawn new child process to call the python script
-            const python = spawn('python', listScripts);
+                var listScripts = [];
+                listScripts.push(__dirname + "/../Python_Scripts/" + script.PATH);
 
-
-            // collect data from script
-            python.stdout.on('data', function(data) {
-                console.log('Running' + script.DESC);
-                dataToSend = data.toString();
-            });
-
-            let resultError = "ERRO:  ";
-
-            python.stderr.on('data', (data) => {
-                resultError += data.toString();
-            });
+                var dataToSend;
+                // spawn new child process to call the python script
+                const python = spawn('python', listScripts);
 
 
-            python.stdout.on("end", function() {
-                if (resultError == "") {
-                    console.log("OK: " + JSON.parse(result));
+                // collect data from script
+                python.stdout.on('data', function(data) {
+                    console.log('Running' + script.DESC);
+                    dataToSend = data.toString();
+                });
+
+                let resultError = "ERRO:  ";
+
+                python.stderr.on('data', (data) => {
+                    resultError += data.toString();
+                });
+
+                python.stdout.on("end", function() {
+                    if (resultError == "") {
+                        console.log("OK: " + JSON.parse(result));
+                    } else {
+                        console.error(`Python error, you can reproduce the error with: python ${script.PATH} `);
+                        const error = new Error(resultError);
+                        console.error(error);
+                        resultError = "";
+                    }
+                })
+
+                if (script.INTERVAL == '0') {
+                    sql = "update aidaia_schedule set status = '0' where id = " + script.ID;
+                    binds = {};
+                    options = {};
+                    result = await connection.execute(sql, binds, options);
+
                 } else {
-                    console.error(`Python error, you can reproduce the error with: python ${script.PATH} `);
-                    const error = new Error(resultError);
-                    console.error(error);
-                    resultError = "";
+
+                    sql = 'update aidaia_schedule set next = sysdate + (1/1440*' + script.INTERVAL + ') where id = ' + script.ID;
+                    binds = {};
+                    options = {};
+                    result = await connection.execute(sql, binds, options);
+
                 }
-            })
 
-            if (script.INTERVAL == '0') {
-                sql = "update aidaia_schedule set status = '0' where id = " + script.ID;
-                binds = {};
-                options = {};
-                result = await connection.execute(sql, binds, options);
-
+            
             } else {
 
-                sql = 'update aidaia_schedule set next = sysdate + (1/1440*' + script.INTERVAL + ') where id = ' + script.ID;
-                binds = {};
-                options = {};
-                result = await connection.execute(sql, binds, options);
+                var listScripts = [];
+                listScripts.push(__dirname + "/../R_Scripts/" + script.PATH);
+
+                var dataToSend;
+                // spawn new child process to call the python script
+                const r = spawn('r', listScripts);
+
+
+                // collect data from script
+                r.stdout.on('data', function(data) {
+                    console.log('Running' + script.DESC);
+                    dataToSend = data.toString();
+                });
+
+                let resultError = "ERRO:  ";
+
+                r.stderr.on('data', (data) => {
+                    resultError += data.toString();
+                });
+
+
+                r.stdout.on("end", function() {
+                    if (resultError == "") {
+                        console.log("OK: " + JSON.parse(result));
+                    } else {
+                        console.error(`R error, you can reproduce the error with: python ${script.PATH} `);
+                        const error = new Error(resultError);
+                        console.error(error);
+                        resultError = "";
+                    }
+                })
+
+                if (script.INTERVAL == '0') {
+                    sql = "update aidaia_schedule set status = '0' where id = " + script.ID;
+                    binds = {};
+                    options = {};
+                    result = await connection.execute(sql, binds, options);
+
+                } else {
+
+                    sql = 'update aidaia_schedule set next = sysdate + (1/1440*' + script.INTERVAL + ') where id = ' + script.ID;
+                    binds = {};
+                    options = {};
+                    result = await connection.execute(sql, binds, options);
+
+                }
 
             }
 
-
         }
 
-
-
-        return 'OK';
+        return 'Update Complete';
 
     } catch (err) {
+        
         console.error(err);
         return err;
+
     } finally {
+        
         if (connection) {
             try {
+                
                 await connection.close();
+
             } catch (err) {
+                
                 console.error(err);
                 return err;
             }
@@ -108,5 +162,5 @@ async function RunScripts() {
 }
 
 module.exports = {
-    RunScripts
+    ScriptsPyR
 }

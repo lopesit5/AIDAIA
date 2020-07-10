@@ -7,8 +7,8 @@ try:
     #CREATE CONNECTION
     conn = cx_Oracle.connect("AIDAIA","AIDAIA2020","//51.178.140.57:1521/ORCLPDB1")
     
-except Exception as err:
-    print('Error with connection', err)
+    except Exception as err:
+        print('Error with connection', err)
 
 else:
 

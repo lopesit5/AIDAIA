@@ -1,6 +1,7 @@
 const express = require('express'),
     cors = require('./cors'),
     logger = require('./logger')
+
 server = express(),
     morgan = require('morgan'),
     uuidv4 = require('uuid/v4'),
@@ -15,8 +16,9 @@ bodyParser = require('body-parser'),
     cronscript = require('../controllers/CRON');
 
 cron.schedule('*/20 * * * * *', () => {
-    cronscript.RunScripts();
+    cronscript.ScriptsPyR();
 });
+
 
 const io = require('socket.io')(8083, {
     path: '/test',
