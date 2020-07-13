@@ -8,9 +8,10 @@ const server = require('../config/server');
 const cron = require("node-cron");
 const { spawn } = require('child_process');
 
-const pythonDir = (__dirname + "/../Python_Scripts/"); // Path of python script folder
-
 async function ScriptsPyR() {
+
+    var iChars = "!#$%&+=;?/:";
+    var iNumbers = "0123456789";
 
     oracledb.autoCommit = true;
 
@@ -36,7 +37,7 @@ async function ScriptsPyR() {
 
         for (const script of result.rows) {
 
-            if(script.ML_LANG == 'Python') {   
+            if(script.ML_LANG == 'Python') { 
 
                 var listScripts = [];
                 listScripts.push(__dirname + "/../Python_Scripts/" + script.PATH);
@@ -44,7 +45,6 @@ async function ScriptsPyR() {
                 var dataToSend;
                 // spawn new child process to call the python script
                 const python = spawn('python', listScripts);
-
 
                 // collect data from script
                 python.stdout.on('data', function(data) {
@@ -68,6 +68,37 @@ async function ScriptsPyR() {
                         resultError = "";
                     }
                 })
+
+                if(length(script.LINK) != '0'){
+                    
+                    if(script.LINK.includes(iChars)){
+
+                        if(script.LINK.include(iNumbers)){
+
+                            axios.get(script.LINK).then(response => {
+                                console.log(response.data.url);
+                                console.log(response.data.explanation);
+                            })
+                            .catch(error => {
+                                console.log(error);
+                            });
+
+                        } else {
+
+                            console.error(`${script.LINK} wrong. Need to include numbers `);
+
+                        }
+
+                    } else {
+
+                        console.error(`Check characters associate to ${script.LINK} `);
+
+                    }
+
+                } else {
+
+                    console.error(`No LINK associate to ${script.DESC} `);
+                }
 
                 if (script.INTERVAL == '0') {
                     sql = "update aidaia_schedule set status = '0' where id = " + script.ID;
@@ -118,6 +149,37 @@ async function ScriptsPyR() {
                         resultError = "";
                     }
                 })
+
+                if(length(script.LINK) != '0'){
+                    
+                    if(script.LINK.includes(iChars)){
+
+                        if(script.LINK.include(iNumbers)){
+
+                            axios.get(script.LINK).then(response => {
+                                console.log(response.data.url);
+                                console.log(response.data.explanation);
+                            })
+                            .catch(error => {
+                                console.log(error);
+                            });
+
+                        } else {
+
+                            console.error(`${script.LINK} wrong. Need to include numbers `);
+
+                        }
+
+                    } else {
+
+                        console.error(`Check characters associate to ${script.LINK} `);
+
+                    }
+
+                } else {
+
+                    console.error(`No LINK associate to ${script.DESC} `);
+                }
 
                 if (script.INTERVAL == '0') {
                     sql = "update aidaia_schedule set status = '0' where id = " + script.ID;
